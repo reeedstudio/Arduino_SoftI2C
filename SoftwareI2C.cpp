@@ -3,6 +3,7 @@
   2012 Copyright (c) Seeed Technology Inc.  All right reserved.
 
   Author:Loovee
+  Author:Loovee
 
   This library is free software; you can redistribute it and/or
   modify it under the terms of the GNU Lesser General Public
@@ -20,8 +21,17 @@
 */
 
 #include <Arduino.h>
+
+#include <Streaming.h>
+
 #include "SoftwareI2C.h"
 
+/*************************************************************************************************
+ * Function Name: begin
+ * Description:  config IO
+ * Parameters: Sda: Scl:
+ * Return: none
+*************************************************************************************************/
 void SoftwareI2C::begin(int Sda, int Scl)
 {
     pinSda = Sda;
@@ -31,51 +41,75 @@ void SoftwareI2C::begin(int Sda, int Scl)
     pinMode(pinSda, OUTPUT);
     digitalWrite(pinScl, HIGH);
     digitalWrite(pinSda, HIGH);
-    delay(200);
-    mpr121_setup();
+
 }
 
-void SoftwareI2C::sda_set(unsigned char ucData)
+/*************************************************************************************************
+ * Function Name: sdaSet
+ * Description:  set sda
+ * Parameters: ucDta: HIGH or LOW
+ * Return: none
+*************************************************************************************************/
+void SoftwareI2C::sdaSet(uchar ucDta)
 {
     pinMode(pinSda, OUTPUT);
-    digitalWrite(pinSda, ucData);
+    digitalWrite(pinSda, ucDta);
 }
 
-void SoftwareI2C::scl_set(unsigned char ucData)
+/*************************************************************************************************
+ * Function Name: sclSet
+ * Description:  set scl
+ * Parameters: ucDta: HIGH or LOW
+ * Return: none
+*************************************************************************************************/
+void SoftwareI2C::sclSet(uchar ucDta)
 {
-    digitalWrite(pinScl, ucData);
+    digitalWrite(pinScl, ucDta);
 }
 
-unsigned char SoftwareI2C::get_sda(void)
+/*************************************************************************************************
+ * Function Name: sdaGet
+ * Description:  get sda value
+ * Parameters: None
+ * Return: return value of sda
+*************************************************************************************************/
+uchar SoftwareI2C::sdaGet(void)
 {
     pinMode(pinSda, INPUT);
     return digitalRead(pinSda);
 }
 
+/*************************************************************************************************
+ * Function Name: i2c_delay
+ * Description:  delay 1 us
+ * Parameters: None
+ * Return: None
+*************************************************************************************************/
 void SoftwareI2C::i2c_delay(void)
 {
     delayMicroseconds(1);
 }
 
-
-/*********************************************************************************************************
-** Function name:           getAck
-** Descriptions:            receive ack
-*********************************************************************************************************/
-unsigned char SoftwareI2C::getAck(void)
+/*************************************************************************************************
+ * Function Name: getAck
+ * Description:  get ack
+ * Parameters: None
+ * Return: 0 – Nak; 1 – Ack
+*************************************************************************************************/
+uchar SoftwareI2C::getAck(void)
 {
     unsigned int ntime = 50000;
 
     pinMode(pinSda, INPUT);
     digitalWrite(pinSda, HIGH);
     DELAY();
-    scl_set(HIGH);
+    sclSet(HIGH);
     // DELAY();
     while(ntime--)
     {
-        if(!digitalRead(pinSda))                        // get ack
+        if(!digitalRead(pinSda))                                // get ack
         {
-            scl_set(LOW);                               // scl low
+            sclSet(LOW);                                        // scl low
             DELAY();
             return GETACK;
         }
@@ -88,208 +122,270 @@ unsigned char SoftwareI2C::getAck(void)
 #endif
     }
 
-    scl_set(LOW);
+    sclSet(LOW);
     DELAY();
+    
     return GETNAK;
 }
 
-/*********************************************************************************************************
-** Function name:           sendAck
-** Descriptions:            send ack
-*********************************************************************************************************/
+/*************************************************************************************************
+ * Function Name: sendAck
+ * Description:  send ack signal
+ * Parameters: None
+ * Return: None
+*************************************************************************************************/
 void SoftwareI2C::sendAck(void)
 {
-    sda_set(LOW);                                                       /* sda_set(LOW)                 */
+    sdaSet(LOW);                                                       // sdaSet(LOW)                 
     DELAY();
-    scl_set(HIGH);                                                      /* scl_set(HIGH)                */
+    sclSet(HIGH);                                                      // sclSet(HIGH)    
     DELAY();
-    scl_set(LOW);                                                       /* scl_set(LOW)                 */
+    sclSet(LOW);                                                       //  sclSet(LOW)   
     DELAY();
 }
 
-/*********************************************************************************************************
-** Function name:           sendNak
-** Descriptions:            send nak
-*********************************************************************************************************/
+/*************************************************************************************************
+ * Function Name: sendNak
+ * Description:  send nak signal
+ * Parameters: None
+ * Return: None
+*************************************************************************************************/
 void SoftwareI2C::sendNak(void)
 {
-    sda_set(HIGH);                                                      /* sda_set(LOW)                 */
+    sdaSet(HIGH);                                                      /* sdaSet(LOW)                 */
     DELAY();
-    scl_set(HIGH);                                                      /* scl_set(HIGH)                */
+    sclSet(HIGH);                                                      /* sclSet(HIGH)                */
     DELAY();
-    scl_set(LOW);                                                       /* scl_set(LOW)                 */
+    sclSet(LOW);                                                       /* sclSet(LOW)                 */
     DELAY();
 }
 
-/*********************************************************************************************************
-** Function name:           sendStart
-** Descriptions:            send start
-*********************************************************************************************************/
+/*************************************************************************************************
+ * Function Name: sendStart
+ * Description:   send start clock
+ * Parameters: None
+ * Return: None
+*************************************************************************************************/
 void SoftwareI2C::sendStart(void)
 {
-    scl_set(HIGH);DELAY();DELAY();DELAY();DELAY();                      /* scl =  1                     */
-    sda_set(HIGH);DELAY();DELAY();DELAY();DELAY();                      /* sda  = 1                     */
-    sda_set(LOW);DELAY();DELAY();DELAY();DELAY();                       /* sda_set(LOW);                */
+    sclSet(HIGH);DELAY();DELAY();DELAY();DELAY();                      /* scl =  1                     */
+    sdaSet(HIGH);DELAY();DELAY();DELAY();DELAY();                      /* sda  = 1                     */
+    sdaSet(LOW);DELAY();DELAY();DELAY();DELAY();                       /* sdaSet(LOW);                */
     DELAY();DELAY();DELAY();DELAY();
-    scl_set(LOW);DELAY();DELAY();DELAY();DELAY();                                             /* scl = 0;                     */
+    sclSet(LOW);DELAY();DELAY();DELAY();DELAY();                                             /* scl = 0;                     */
                                                                         /* delay_us_cfg(15);            */
 
 }
 
-/*********************************************************************************************************
-** Function name:           sendStop
-** Descriptions:            send stop
-*********************************************************************************************************/
+/*************************************************************************************************
+ * Function Name: setClockDivider
+ * Description:  setup clock divider for spi bus
+ * Parameters: divider – clock divider
+ * Return: 0 – setup ok; 1 – setup failed
+*************************************************************************************************/
 void SoftwareI2C::sendStop(void)
 {
-    scl_set(HIGH);DELAY();
-    sda_set(LOW); DELAY();
-    sda_set(HIGH);DELAY();
-    scl_set(LOW);
+
+    sdaSet(LOW); DELAY();
+    sclSet(HIGH);DELAY();
+    
+    sdaSet(HIGH);DELAY();
+    sclSet(LOW);
     for(int i = 0; i<10; i++)
     DELAY();
 }
 
-/*********************************************************************************************************
-** Function name:           sendStop
-** Descriptions:            send stop
-*********************************************************************************************************/
-void SoftwareI2C::sendBit(unsigned char bit)
+/*************************************************************************************************
+ * Function Name: sendBit
+ * Description:  send a bit
+ * Parameters: bit: 0 or 1?
+ * Return: None
+*************************************************************************************************/
+void SoftwareI2C::sendBit(uchar bit)
 {
     if (bit & 0x80) {
-        sda_set(HIGH);
+        sdaSet(HIGH);
     } else {
-        sda_set(LOW);
+        sdaSet(LOW);
     }
     DELAY();
-    scl_set(HIGH);
+    sclSet(HIGH);
     DELAY();
-    scl_set(LOW);
+    sclSet(LOW);
 
 }
 
-/*********************************************************************************************************
-** Function name:           sendByte
-** Descriptions:            send a byte
-*********************************************************************************************************/
-unsigned char SoftwareI2C::revBit()
+/*************************************************************************************************
+ * Function Name: revBit
+ * Description:  receive a bit
+ * Parameters: None
+ * Return: value
+*************************************************************************************************/
+uchar SoftwareI2C::revBit()
 {
     unsigned  char  ucRt;
     DELAY();
-    scl_set(HIGH);
+    sclSet(HIGH);
     DELAY();
-    ucRt = get_sda();
-    scl_set(LOW);
+    ucRt = sdaGet();
+    sclSet(LOW);
     return  ucRt;
 
 }
 
-/*********************************************************************************************************
-** Function name:           sendByte
-** Descriptions:            send a byte
-*********************************************************************************************************/
-void SoftwareI2C::sendByte(unsigned char ucData)
+/*************************************************************************************************
+ * Function Name: sendByte
+ * Description:  send a byte
+ * Parameters: ucDta: data to send
+ * Return: None
+*************************************************************************************************/
+void SoftwareI2C::sendByte(uchar ucDta)
 {
     unsigned  char  i;
 
     i = 8;
     do {
-        sendBit(ucData);
-        ucData=ucData << 1;
+        sendBit(ucDta);
+        ucDta=ucDta << 1;
     } while (--i != 0);
 
 }
 
-/*********************************************************************************************************
-** Function name:           revByte
-** Descriptions:            receive a byte
-*********************************************************************************************************/
-unsigned char SoftwareI2C::revByte()
+/*************************************************************************************************
+ * Function Name: sendByteAck
+ * Description:  send a byte and get ack signal
+ * Parameters: ucDta: data to send
+ * Return: 0: get nak  1: get ack
+*************************************************************************************************/
+uchar SoftwareI2C::sendByteAck(uchar ucDta)
+{
+    sendByte(ucDta);
+    return getAck();
+}
+
+/*************************************************************************************************
+ * Function Name: revByte
+ * Description:  receive a byte
+ * Parameters: None
+ * Return: value that receive
+*************************************************************************************************/
+uchar SoftwareI2C::revByte()
 {
     unsigned  char  ucRt;
     unsigned  char  i;
 
-    //  receive data
     i = 8;
     do {
         ucRt  =  (ucRt << 1) + revBit();
     } while (--i != 0);
 
+    return ucRt;
 
 }
 
-void SoftwareI2C::setRegister(unsigned char ucAddr, unsigned char ucReg, unsigned char dta)
+/*************************************************************************************************
+ * Function Name: beginTransmission
+ * Description:  send begin signal
+ * Parameters: divider – clock divider
+ * Return: 0: get nak  1: get ack
+*************************************************************************************************/
+uchar SoftwareI2C::beginTransmission(uchar addr)
 {
-    sendStart();
-    sendByte(ucAddr<<1);
-    getAck();
-    delayMicroseconds(1);
-    sendByte(ucReg);
-    getAck();
-    delayMicroseconds(1);
-    sendByte(dta);
-    getAck();
+
+    sendStart();                       // start signal
+    return sendByteAck(addr<<1);       // send write address and get ack
+
+}
+
+/*************************************************************************************************
+ * Function Name: endTransmission
+ * Description:  send stop signal
+ * Parameters: None
+ * Return: None
+*************************************************************************************************/
+void SoftwareI2C::endTransmission()
+{
     sendStop();
-
+    
 }
 
-void SoftwareI2C::mpr121_setup()
+/*************************************************************************************************
+ * Function Name: write
+ * Description:  send a byte
+ * Parameters: dta: data to send
+ * Return: 0: get nak  1: get ack
+*************************************************************************************************/  
+uchar SoftwareI2C::write(uchar dta)
 {
-    // Section A - Controls filtering when data is > baseline.
-    setRegister(0x5A, MHD_R, 0x01);
-    setRegister(0x5A, NHD_R, 0x01);
-    setRegister(0x5A, NCL_R, 0x00);
-    setRegister(0x5A, FDL_R, 0x00);
-
-    // Section B - Controls filtering when data is < baseline.
-    setRegister(0x5A, MHD_F, 0x01);
-    setRegister(0x5A, NHD_F, 0x01);
-    setRegister(0x5A, NCL_F, 0xFF);
-    setRegister(0x5A, FDL_F, 0x02);
-
-    // Section C - Sets touch and release thresholds for each electrode
-    setRegister(0x5A, ELE0_T, TOU_THRESH);
-    setRegister(0x5A, ELE0_R, REL_THRESH);
-    setRegister(0x5A, ELE1_T, TOU_THRESH);
-    setRegister(0x5A, ELE1_R, REL_THRESH);
-    setRegister(0x5A, ELE2_T, TOU_THRESH);
-    setRegister(0x5A, ELE2_R, REL_THRESH);
-    setRegister(0x5A, ELE3_T, TOU_THRESH);
-    setRegister(0x5A, ELE3_R, REL_THRESH);
-    setRegister(0x5A, ELE4_T, TOU_THRESH);
-    setRegister(0x5A, ELE4_R, REL_THRESH);
-    setRegister(0x5A, ELE5_T, TOU_THRESH);
-    setRegister(0x5A, ELE5_R, REL_THRESH);
-    setRegister(0x5A, ELE6_T, TOU_THRESH);
-    setRegister(0x5A, ELE6_R, REL_THRESH);
-    setRegister(0x5A, ELE7_T, TOU_THRESH);
-    setRegister(0x5A, ELE7_R, REL_THRESH);
-    setRegister(0x5A, ELE8_T, TOU_THRESH);
-    setRegister(0x5A, ELE8_R, REL_THRESH);
-    setRegister(0x5A, ELE9_T, TOU_THRESH);
-    setRegister(0x5A, ELE9_R, REL_THRESH);
-    setRegister(0x5A, ELE10_T, TOU_THRESH);
-    setRegister(0x5A, ELE10_R, REL_THRESH);
-    setRegister(0x5A, ELE11_T, TOU_THRESH);
-    setRegister(0x5A, ELE11_R, REL_THRESH);
-    setRegister(0x5A, FIL_CFG, 0x04);
-    setRegister(0x5A, ELE_CFG, 0x0C);  // Enables all 12 Electrodes
-
+    return sendByteAck(dta);
 }
 
-void SoftwareI2C::getDtaMpr121(unsigned char *d1, unsigned char *d2)
+/*************************************************************************************************
+ * Function Name: write
+ * Description:  write array
+ * Parameters: len - length of the array
+               *dta - array to be sent
+ * Return: 0: get nak  1: get ack
+*************************************************************************************************/
+uchar SoftwareI2C::write(uchar len, uchar *dta)
 {
-    unsigned char dta;
-    sendStart();
-    sendByte(0xb5);
-    getAck();
-    *d1 = revByte();
+    for(int i=0; i<len; i++)
+    {
+    
+        if(GETACK != write(dta[i]))
+        {
+            return GETNAK;
+        }
+    }
+    
+    return GETACK;
+}
+
+/*************************************************************************************************
+ * Function Name: requestFrom
+ * Description:  request data from slave
+ * Parameters: addr - address of slave
+               len  - length of request
+ * Return: 0: get nak  1: get ack
+*************************************************************************************************/
+uchar SoftwareI2C::requestFrom(uchar addr, uchar len)
+{
+
+    sendStart();                       // start signal
+    recv_len = len;
+    return sendByteAck((addr<<1)+1);       // send write address and get ack
+}
+
+/*************************************************************************************************
+ * Function Name: read
+ * Description:  read a byte from i2c
+ * Parameters: None
+ * Return: data get
+*************************************************************************************************/
+uchar SoftwareI2C::read()
+{
+    
+    if(-1 == recv_len)return 0;
+    
+    uchar dta = revByte();
+    
+    recv_len--;
+    
+    if(recv_len>0)
     sendAck();
-    *d2 = revByte();
-    sendNak();
-    sendStop();
+    else
+    {
+        sendNak();
+        sendStop();
+        recv_len=-1;
+    }
+
+    return dta;
+ 
 }
 
+SoftwareI2C Wire;
+    
 /*********************************************************************************************************
   END FILE
 *********************************************************************************************************/

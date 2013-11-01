@@ -3,7 +3,11 @@
   2012 Copyright (c) Seeed Technology Inc.  All right reserved.
 
   Author:Loovee
+  2013-11-1
 
+  This is a Software I2C Library, can act as I2c master mode.
+  
+  
   This library is free software; you can redistribute it and/or
   modify it under the terms of the GNU Lesser General Public
   License as published by the Free Software Foundation; either
@@ -18,16 +22,19 @@
   License along with this library; if not, write to the Free Software
   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
+
 #ifndef _SOFTWAREI2C_H_
 #define _SOFTWAREI2C_H_
 
-#include "MPR121LVC.h"
 
 #define DELAY i2c_delay
 
 #define __Debug        1                      // debug mode
+
+
 #define  GETACK        1                      // get ack                        
-#define  GETNAK        0                      // get nak      
+#define  GETNAK        0                      // get nak   
+   
 #ifndef  HIGH        
 #define  HIGH          1
 #endif
@@ -35,44 +42,53 @@
 #define  LOW           0
 #endif
 
+#define uchar unsigned char
+
 class SoftwareI2C
 {
-    private:
+private:
     
     int pinSda;
     int pinScl;
     
-    private:
+    int recv_len;
     
-    void sda_set(unsigned char ucData); 
-    void scl_set(unsigned char ucData);                             
-    unsigned char get_sda(void);                                        
+private:
+    
+    void sdaSet(uchar ucDta); 
+    void sclSet(uchar ucDta);                             
+    uchar sdaGet(void);                                        
     void i2c_delay(void);          
 
-    void mpr121_setup(void);
-
-    public:
-    
-    void begin(int Sda, int Scl); 
     void sendStart(void);
     void sendStop(void);
-    unsigned char getAck(void);
+    uchar getAck(void);
     void sendAck(void);
     void sendNak(void);
     
-    void sendBit(unsigned char bit);
-    unsigned char revBit();
+    void sendBit(uchar bit);
+    uchar revBit();
     
-    void sendByte(unsigned char ucData);
-    unsigned char revByte();
+    void sendByte(uchar ucDta);
     
-   // unsigned char I2CWrite(unsigned char ucAddr, unsigned char uiRegAddr, unsigned char ucRegAddrLen, unsigned char *pucData, unsigned char ucDataLen)
+    uchar sendByteAck(uchar ucDta);                                // send byte and get ack
     
-    void setRegister(unsigned char ucAddr, unsigned char ucReg, unsigned char dta);
-    void getDtaMpr121(unsigned char *d1, unsigned char *d2);
+    uchar revByte();                                                // receive a byte
+    
+public:
+    
+    void begin(int Sda, int Scl); 
+    uchar beginTransmission(uchar addr);
+    void endTransmission();
+    
+    uchar write(uchar dta);
+    uchar write(uchar len, uchar *dta);
+    uchar requestFrom(uchar addr, uchar len);
+    uchar read();
 
 };
 
+extern SoftwareI2C Wire;
 #endif
 /*********************************************************************************************************
   END FILE
