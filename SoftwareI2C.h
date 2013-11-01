@@ -71,7 +71,7 @@ private:
     
     void sendByte(uchar ucDta);
     
-    uchar sendByteAck(uchar ucDta);                                // send byte and get ack
+    uchar sendByteAck(uchar ucDta);                                 // send byte and get ack
     
     uchar revByte();                                                // receive a byte
     
